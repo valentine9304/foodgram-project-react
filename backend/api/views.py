@@ -1,10 +1,11 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
-from rest_framework.permissions import SAFE_METHODS
+from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
+from rest_framework.pagination import PageNumberPagination
 
 from .serializers import (
     TagsSerializer,
@@ -15,7 +16,7 @@ from .serializers import (
     FavoriteSerializer,
 )
 from recipes.models import Tags, Ingredients, Recipes, ShoppingCart, Favorite
-from .pagination import RecipesPagination
+
 from .filter import RecipeFilter, IngredientsFilter
 from .permissions import IsAuthorOrAdminOrReadOnly
 
@@ -43,7 +44,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     queryset = Recipes.objects.all().order_by("-id")
     serializer_class = RecipesSerializer
-    pagination_class = RecipesPagination
+    pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
@@ -56,7 +57,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @action(
         detail=True,
         methods=["post", "delete"],
-        # permission_classes=[IsAuthenticated],
+        permission_classes=[IsAuthenticated],
     )
     def shopping_cart(self, request, pk):
         """
@@ -95,7 +96,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
     @action(
         detail=True,
         methods=["post", "delete"],
-        # permission_classes=[IsAuthenticated],
+        permission_classes=[IsAuthenticated],
     )
     def favorite(self, request, pk):
         """

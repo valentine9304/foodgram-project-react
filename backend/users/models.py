@@ -2,17 +2,16 @@ from django.contrib.auth.models import AbstractUser
 from django.core.validators import RegexValidator
 from django.db import models
 
-USER = "user"
-ADMIN = "admin"
-ROLES = [
-    (USER, "user"),
-    (ADMIN, "admin"),
-]
-
 
 class User(AbstractUser):
     """Кастомизированная модель Пользователей."""
 
+    USER = "user"
+    ADMIN = "admin"
+    ROLES = [
+        (USER, "user"),
+        (ADMIN, "admin"),
+    ]
     username = models.CharField(
         max_length=150,
         verbose_name="Логин",
@@ -30,7 +29,7 @@ class User(AbstractUser):
     first_name = models.CharField(max_length=150, verbose_name="Имя")
     last_name = models.CharField(max_length=150, verbose_name="Фамилия")
     role = models.CharField(
-        max_length=20, verbose_name="Роль", choices=ROLES, default="user"
+        max_length=20, verbose_name="Роль", choices=ROLES, default=USER
     )
     password = models.CharField(max_length=150, verbose_name="Пароль")
 
@@ -40,7 +39,6 @@ class User(AbstractUser):
     class Meta:
         verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи"
-        ordering = ("id",)
 
     def __str__(self):
         return self.username

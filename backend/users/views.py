@@ -1,16 +1,14 @@
 from django.shortcuts import get_object_or_404
 
 from rest_framework.filters import SearchFilter
-
-from api.pagination import RecipesPagination
-
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from djoser.serializers import SetPasswordSerializer
+from rest_framework.pagination import PageNumberPagination
 
-# from .permissions import IsAdmin
+
 from users.models import User, Follow
 from .serializers import UserSerializer
 from api.serializers import FollowSerializer
@@ -23,7 +21,7 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     http_method_names = ["get", "post", "patch", "delete"]
     serializer_class = UserSerializer
-    pagination_class = RecipesPagination
+    pagination_class = PageNumberPagination
     filter_backends = [SearchFilter]
     search_fields = ["username"]
     permission_classes = [IsUserOrAdminOrReadOnly]

@@ -1,11 +1,12 @@
 from rest_framework import permissions
+from users.models import User
 
 
 class IsAuthorOrAdminOrReadOnly(permissions.BasePermission):
     """ "Права для автора комментария или администратора."""
 
     def has_permission(self, request, view):
-        return bool(
+        return (
             request.method in permissions.SAFE_METHODS
             or request.user.is_authenticated
         )
@@ -17,7 +18,7 @@ class IsAuthorOrAdminOrReadOnly(permissions.BasePermission):
             obj.author == request.user
             or request.user.is_superuser
             or request.user.is_staff
-            or request.user.role == "admin"
+            or request.user.role == User.ADMIN
         )
 
 
@@ -31,5 +32,5 @@ class IsUserOrAdminOrReadOnly(permissions.BasePermission):
             obj.id == request.user
             or request.user.is_superuser
             or request.user.is_staff
-            or request.user.role == "admin"
+            or request.user.role == User.ADMIN
         )
