@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
+from rest_framework.validators import UniqueTogetherValidator
 from drf_extra_fields.fields import Base64ImageField
 from django.shortcuts import get_object_or_404
 
@@ -131,30 +132,30 @@ class CreateRecipesSerializer(serializers.ModelSerializer):
             "cooking_time",
         )
 
-    # def validate_ingredients(self, value):
-    #     ingredients = value
-    #     if not ingredients:
-    #         raise ValidationError("Нужно выбрать ингредиент.")
-    #     ingredients_list = []
-    #     for item in ingredients:
-    #         ingredient = get_object_or_404(Ingredients, name=item["id"])
-    #         if ingredient in ingredients_list:
-    #             raise ValidationError("Ингридиенты повторяются.")
-    #         if int(item["amount"]) <= 0:
-    #             raise ValidationError({"Количество не может быть нулевым."})
-    #         ingredients_list.append(ingredient)
-    #     return value
+    def validate_ingredients(self, value):
+        ingredients = value
+        if not ingredients:
+            raise ValidationError("Нужно выбрать ингредиент.")
+        ingredients_list = []
+        for item in ingredients:
+            ingredient = get_object_or_404(Ingredients, id=item["id"])
+            if ingredient in ingredients_list:
+                raise ValidationError("Ингридиенты повторяются.")
+            if int(item["amount"]) <= 0:
+                raise ValidationError({"Количество не может быть нулевым."})
+            ingredients_list.append(ingredient)
+        return value
 
-    # def validate_tags(self, value):
-    #     tags = value
-    #     if not tags:
-    #         raise ValidationError("Нужно выбрать тег")
-    #     tags_list = []
-    #     for tag in tags:
-    #         if tag in tags_list:
-    #             raise ValidationError("Теги повторяются")
-    #         tags_list.append(tag)
-    #     return value
+    def validate_tags(self, value):
+        tags = value
+        if not tags:
+            raise ValidationError("Нужно выбрать тег")
+        tags_list = []
+        for tag in tags:
+            if tag in tags_list:
+                raise ValidationError("Теги повторяются")
+            tags_list.append(tag)
+        return value
 
     def to_representation(self, instance):
         serializers = RecipesSerializer(instance)
@@ -222,6 +223,13 @@ class FavoriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Favorite
         fields = ("id", "name", "image", "coocking_time")
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Favorite.objects.all(),
+                fields=("user", "recipe"),
+                message="Рецепт уже добавлен в избранное",
+            )
+        ]
 
 
 class RecipeMiniSerializer(serializers.ModelSerializer):

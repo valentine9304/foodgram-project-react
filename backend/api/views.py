@@ -1,5 +1,6 @@
+from django.db.models import Sum
 from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, HttpResponse
 from rest_framework import viewsets, status
 from rest_framework.permissions import SAFE_METHODS, IsAuthenticated
 from rest_framework.response import Response
@@ -15,7 +16,14 @@ from .serializers import (
     ShoppingCartSerializer,
     FavoriteSerializer,
 )
-from recipes.models import Tags, Ingredients, Recipes, ShoppingCart, Favorite
+from recipes.models import (
+    Tags,
+    Ingredients,
+    Recipes,
+    ShoppingCart,
+    Favorite,
+    RecipesIngredients,
+)
 
 from .filter import RecipeFilter, IngredientsFilter
 from .permissions import IsAuthorOrAdminOrReadOnly
@@ -92,6 +100,34 @@ class RecipesViewSet(viewsets.ModelViewSet):
             "Рецепт удалён из списка покупок.",
             status=status.HTTP_204_NO_CONTENT,
         )
+
+    @action(
+        detail=False,
+        methods=["get"],
+        permission_classes=[
+            IsAuthenticated,
+        ],
+    )
+    def download_shopping_cart(self, request):
+        """Отправка файла со списком покупок."""
+        ingredients = (
+            RecipesIngredients.objects.filter(
+                recipe__shoppingcart__user=request.user
+            )
+            .values("ingredient__name", "ingredient__measurement_unit")
+            .annotate(ingredient_amount=Sum("amount"))
+        )
+        shopping_list = ["Список покупок:\n"]
+        for ingredient in ingredients:
+            name = ingredient["ingredient__name"]
+            unit = ingredient["ingredient__measurement_unit"]
+            amount = ingredient["ingredient_amount"]
+            shopping_list.append(f"\n{name} - {amount}, {unit}")
+        response = HttpResponse(shopping_list, content_type="text/plain")
+        response[
+            "Content-Disposition"
+        ] = 'attachment; filename="shopping_cart.txt"'
+        return response
 
     @action(
         detail=True,
