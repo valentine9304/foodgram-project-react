@@ -213,7 +213,7 @@ class ShoppingCartSerializer(serializers.ModelSerializer):
 
 
 class FavoriteSerializer(serializers.ModelSerializer):
-    """Serializer для создания ShoppingCart."""
+    """Serializer для создания Избранного."""
 
     id = serializers.PrimaryKeyRelatedField(read_only=True)
     name = serializers.ReadOnlyField(read_only=True)
@@ -223,20 +223,15 @@ class FavoriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Favorite
         fields = ("id", "name", "image", "coocking_time")
-        validators = [
-            UniqueTogetherValidator(
-                queryset=Favorite.objects.all(),
-                fields=("user", "recipe"),
-                message="Рецепт уже добавлен в избранное",
-            )
-        ]
 
 
 class RecipeMiniSerializer(serializers.ModelSerializer):
     """Сериализатор для показа рецептов у тех на кого Подписан."""
 
+    # image = Base64ImageField(read_only=True)
     # image = serializers.SerializerMethodField()
-    # image = serializers.ImageField(source="recipe.image", read_only=True)
+    # image = serializers.ImageField(source="recipes.image", read_only=True)
+    # image = serializers.ImageField(read_only=True)
 
     class Meta:
         model = Recipes
@@ -247,13 +242,12 @@ class RecipeMiniSerializer(serializers.ModelSerializer):
             "cooking_time",
         )
 
-    # def get_image(self, obj):
-    #     request = self.context.get("request", None)
+    # def get_image(self, recipe):
+    #     request = self.context.get("request")
     #     # breakpoint()
-    #     # photo_url = recipes.image.url
-    #     # return request.build_absolute_uri(obj.image.url)
-    #     breakpoint()
-    #     return request.build_absolute_uri(obj.image.url)
+    #     photo_url = recipe.image.url
+    #     return request.build_absolute_uri(photo_url)
+    #     # breakpoint()
 
 
 class FollowSerializer(serializers.ModelSerializer):
@@ -268,6 +262,7 @@ class FollowSerializer(serializers.ModelSerializer):
     last_name = serializers.ReadOnlyField(source="author.last_name")
     is_subscribed = serializers.SerializerMethodField()
     recipes = serializers.SerializerMethodField()
+    # recipes = RecipeMiniSerializer(many=True, read_only=True)
     recipes_count = serializers.SerializerMethodField()
 
     class Meta:
@@ -293,9 +288,13 @@ class FollowSerializer(serializers.ModelSerializer):
         ).exists()
 
     def get_recipes(self, obj):
-        queryset = obj.author.recipes.all()
-
-        return RecipeMiniSerializer(queryset, many=True).data
+        request = self.context.get("request")
+        limit = request.GET.get("recipes_limit")
+        recipes = obj.author.recipes.all()
+        if limit:
+            recipes = recipes[: int(limit)]
+        serializer = RecipeMiniSerializer(recipes, many=True, read_only=True)
+        return serializer.data
 
     def get_recipes_count(self, obj) -> int:
         return obj.author.recipes.count()

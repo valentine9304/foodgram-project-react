@@ -8,6 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
 from rest_framework.pagination import PageNumberPagination
 
+
 from .serializers import (
     TagsSerializer,
     IngredientsSerializer,
@@ -27,6 +28,7 @@ from recipes.models import (
 
 from .filter import RecipeFilter, IngredientsFilter
 from .permissions import IsAuthorOrAdminOrReadOnly
+from .pagination import CustomPaginator
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -52,7 +54,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
     queryset = Recipes.objects.all().order_by("-id")
     serializer_class = RecipesSerializer
-    pagination_class = PageNumberPagination
+    pagination_class = CustomPaginator
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
     permission_classes = (IsAuthorOrAdminOrReadOnly,)
@@ -141,7 +143,6 @@ class RecipesViewSet(viewsets.ModelViewSet):
         """
         recipe = get_object_or_404(Recipes, id=pk)
         user = self.request.user
-
         if request.method == "POST":
             if Favorite.objects.filter(user=user, recipe=recipe).exists():
                 return Response(
@@ -152,6 +153,7 @@ class RecipesViewSet(viewsets.ModelViewSet):
 
             if serializer.is_valid(raise_exception=True):
                 serializer.save(user=user, recipe=recipe)
+
                 return Response(
                     serializer.data, status=status.HTTP_201_CREATED
                 )
