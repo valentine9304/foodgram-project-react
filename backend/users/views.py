@@ -90,7 +90,10 @@ class UserViewSet(viewsets.ModelViewSet):
                     "Пользователь уже подписан на этого Автора.",
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            serializer = FollowSerializer(data=request.data)
+            serializer = FollowSerializer(
+                data=request.data,
+                context={"request": request, "author": author},
+            )
 
             if serializer.is_valid(raise_exception=True):
                 serializer.save(user=user, author=author)
