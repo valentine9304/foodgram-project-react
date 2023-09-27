@@ -9,7 +9,6 @@ services:
       - ./.env
     
   backend:
-    # container_name: back
     image: back:latest
     restart: always
     volumes:
@@ -21,7 +20,6 @@ services:
       - ./.env
 
   frontend:
-    # container_name: front
     image: front:latest
     volumes:
       - ../frontend/:/app/result_build/
